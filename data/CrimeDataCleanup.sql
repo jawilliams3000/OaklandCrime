@@ -6,26 +6,33 @@ IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Oaklan
 GO
 
 CREATE TABLE [dbo].[OaklandCrimeData](
+	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[RawCrimeType] [nvarchar](64) NULL,
 	[CrimeType] [nvarchar](64) NULL,
 	[DateTime] [datetime] NULL,
 	[Month] [smallint] NULL,
 	[Day] [smallint] NULL,
+	[WeekDay] [smallint] NULL,
+	[DayOfYear] [smallint] NULL,
 	[Year] [smallint] NULL,
 	[HourOfDay] [smallint] NULL,
 	[CaseNumber] [nvarchar](16) NULL,
 	[Description] [nvarchar](255) NULL,
 	[PoliceBeat] [nvarchar](16) NULL,
 	[Address] [nvarchar](255) NULL
+ CONSTRAINT [PK_OaklandCrimeData] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
 
-INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, [Description], PoliceBeat, [Address] FROM [2010Crime] 
-INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, [Description], PoliceBeat, [Address] FROM [2011Crime] 
-INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, [Description], PoliceBeat, [Address] FROM [2012Crime] 
-INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, [Description], PoliceBeat, [Address] FROM [2013Crime] 
-INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, [Description], PoliceBeat, [Address] FROM [2014Crime] 
-INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, [Description], PoliceBeat, [Address] FROM [2015Crime] 
+INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), DATEPART(dw,[Datetime]), DATEPART(dy,[Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, REPLACE([Description],'''',''), PoliceBeat, [Address] FROM [2010Crime] 
+INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), DATEPART(dw,[Datetime]), DATEPART(dy,[Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, REPLACE([Description],'''',''), PoliceBeat, [Address] FROM [2011Crime] 
+INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), DATEPART(dw,[Datetime]), DATEPART(dy,[Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, REPLACE([Description],'''',''), PoliceBeat, [Address] FROM [2012Crime] 
+INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), DATEPART(dw,[Datetime]), DATEPART(dy,[Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, REPLACE([Description],'''',''), PoliceBeat, [Address] FROM [2013Crime] 
+INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), DATEPART(dw,[Datetime]), DATEPART(dy,[Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, REPLACE([Description],'''',''), PoliceBeat, [Address] FROM [2014Crime] 
+INSERT INTO OaklandCrimeData SELECT CrimeType, NULL, [DateTime], MONTH([Datetime]), DAY([Datetime]), DATEPART(dw,[Datetime]), DATEPART(dy,[Datetime]), YEAR([Datetime]), DATEPART(hh, [Datetime]), CaseNumber, REPLACE([Description],'''',''), PoliceBeat, [Address] FROM [2015Crime] 
 
 -- Categorize Crimes
 
@@ -112,16 +119,16 @@ INSERT INTO LookupCrime (RawCrimeType)
 SELECT DISTINCT RawCrimeType FROM OaklandCrimeData 
 
 UPDATE LookupCrime SET CrimeType = 'Arson', CrimeCategory = 'Property' WHERE RawCrimeType LIKE '%Arson%'
-UPDATE LookupCrime SET CrimeType = 'AssaultBattery', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE '%Assault%'
-UPDATE LookupCrime SET CrimeType = 'RapeAttemptedRape', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE '%RAPE%'
-UPDATE LookupCrime SET CrimeType = 'BombThreat', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE '%BOMB%'
-UPDATE LookupCrime SET CrimeType = 'BrandishingWeapon', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE '%BRANDISHING%'
+UPDATE LookupCrime SET CrimeType = 'AssaultBattery', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE '%Assault%'
+UPDATE LookupCrime SET CrimeType = 'RapeAttemptedRape', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE '%RAPE%'
+UPDATE LookupCrime SET CrimeType = 'BombThreat', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE '%BOMB%'
+UPDATE LookupCrime SET CrimeType = 'BrandishingWeapon', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE '%BRANDISHING%'
 UPDATE LookupCrime SET CrimeType = 'Burglary', CrimeCategory = 'Property' WHERE RawCrimeType LIKE 'Burg %' OR RawCrimeType LIKE 'Burglary%'
-UPDATE LookupCrime SET CrimeType = 'Carjacking', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE 'Carjacking%'
-UPDATE LookupCrime SET CrimeType = 'ChildElderAbuse', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE '%Child Abuse%' OR RawCrimeType LIKE '%ChildElderAbuse%'
+UPDATE LookupCrime SET CrimeType = 'Carjacking', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE 'Carjacking%'
+UPDATE LookupCrime SET CrimeType = 'ChildElderAbuse', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE '%Child Abuse%' OR RawCrimeType LIKE '%ChildElderAbuse%'
 UPDATE LookupCrime SET CrimeType = 'CurfewLoitering', CrimeCategory = 'QualityOfLife' WHERE RawCrimeType LIKE '%Curfew%'
 UPDATE LookupCrime SET CrimeType = 'DisorderlyConduct', CrimeCategory = 'QualityOfLife' WHERE RawCrimeType LIKE '%DISORDERLY CONDUCT%'
-UPDATE LookupCrime SET CrimeType = 'DomesticViolence', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE '%DOMESTIC VIOLENCE%'
+UPDATE LookupCrime SET CrimeType = 'DomesticViolence', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE '%DOMESTIC VIOLENCE%'
 UPDATE LookupCrime SET CrimeType = 'DrugPossesionSale', CrimeCategory = 'QualityOfLife' WHERE RawCrimeType LIKE '%DRUG ABUSE VIOLATION%' OR RawCrimeType LIKE '%NARCOTICS%' OR RawCrimeType = 'DrugPossessionSale'
 UPDATE LookupCrime SET CrimeType = 'PublicDrunkenness', CrimeCategory = 'QualityOfLife' WHERE RawCrimeType LIKE '%DRUNKENNESS%'
 UPDATE LookupCrime SET CrimeType = 'DisturbingThePeace', CrimeCategory = 'QualityOfLife' WHERE RawCrimeType = 'DISTURBING THE PEACE'
@@ -132,9 +139,9 @@ UPDATE LookupCrime SET CrimeType = 'ForgeryCounterfeiting', CrimeCategory = 'Pro
 UPDATE LookupCrime SET CrimeType = 'Fraud', CrimeCategory = 'Property' WHERE RawCrimeType LIKE '%FRAUD%'
 UPDATE LookupCrime SET CrimeType = 'Gambling', CrimeCategory = 'QualityOfLife' WHERE RawCrimeType LIKE '%GAMBLING%'
 UPDATE LookupCrime SET CrimeType = 'Theft', CrimeCategory = 'Property' WHERE RawCrimeType LIKE '%GRAND THEFT%' OR RawCrimeType LIKE '%LARCENY THEFT%' OR RawCrimeType LIKE 'PETTY THEFT' OR RawCrimeType = 'THEFT'
-UPDATE LookupCrime SET CrimeType = 'Homicide', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE '%Homicide%'
+UPDATE LookupCrime SET CrimeType = 'Homicide', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE '%Homicide%'
 UPDATE LookupCrime SET CrimeType = 'None', CrimeCategory = 'None' WHERE RawCrimeType LIKE '%INCIDENT TYPE%' OR RawCrimeType LIKE '%RUNAWAY%'
-UPDATE LookupCrime SET CrimeType = 'Kidnapping', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE '%KIDNAPPING%'
+UPDATE LookupCrime SET CrimeType = 'Kidnapping', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE '%KIDNAPPING%'
 UPDATE LookupCrime SET CrimeType = 'None', CrimeCategory = 'None' WHERE RawCrimeType LIKE '%LOST VEHICLE%' OR RawCrimeType LIKE '%Recovered%'
 UPDATE LookupCrime SET CrimeType = 'Other', CrimeCategory = 'Other' WHERE RawCrimeType LIKE '%MISSING%' OR RawCrimeType LIKE '%OAKLAND MUNI CODE%' OR RawCrimeType LIKE 'OTHER' OR RawCrimeType LIKE 'OUTSIDE AGENCY INCIDENT'
 UPDATE LookupCrime SET CrimeType = 'OtherSexOffenses', CrimeCategory = 'QualityOfLife' WHERE RawCrimeType = 'PANDERING'
@@ -142,14 +149,14 @@ UPDATE LookupCrime SET CrimeType = 'Pandering', CrimeCategory = 'QualityOfLife' 
 UPDATE LookupCrime SET CrimeType = 'ObstructionResistingArrest', CrimeCategory = 'QualityOfLife' WHERE RawCrimeType = 'ObstructionResistingArrest'
 UPDATE LookupCrime SET CrimeType = 'Prostitution', CrimeCategory = 'QualityOfLife' WHERE RawCrimeType LIKE '%PROSTITUTION%'
 UPDATE LookupCrime SET CrimeType = 'PossesionStolenProperty', CrimeCategory = 'Property' WHERE RawCrimeType LIKE '%POSSESSION - STOLEN PROPERTY%'
-UPDATE LookupCrime SET CrimeType = 'Robbery', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE '%Robbery%'
+UPDATE LookupCrime SET CrimeType = 'Robbery', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE '%Robbery%'
 UPDATE LookupCrime SET CrimeType = 'VehicleTheft', CrimeCategory = 'Property' WHERE RawCrimeType LIKE '%STOLEN AND RECOVERED VEHICLE%' OR RawCrimeType LIKE '%STOLEN VEHICLE%' OR RawCrimeType LIKE 'MOTOR VEHICLE THEFT%' OR RawCrimeType = 'ATTEMPT VEHICLE THEFT-AUTO'
-UPDATE LookupCrime SET CrimeType = 'Threats', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE '%THREATS%'
+UPDATE LookupCrime SET CrimeType = 'Threats', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE '%THREATS%'
 UPDATE LookupCrime SET CrimeType = 'Traffic', CrimeCategory = 'QualityOfLife' WHERE RawCrimeType LIKE '%TOWED VEHICLE%' OR RawCrimeType LIKE '%MISCELLANEOUS TRAFFIC CRIME%'
 UPDATE LookupCrime SET CrimeType = 'Unknown', CrimeCategory = 'Other' WHERE RawCrimeType LIKE '%Unknown%'
 UPDATE LookupCrime SET CrimeType = 'Vandalism', CrimeCategory = 'Property' WHERE RawCrimeType LIKE 'VANDALISM%%'
 UPDATE LookupCrime SET CrimeType = 'IllegalWeaponsPossesion', CrimeCategory = 'QualityOfLife' WHERE RawCrimeType LIKE '%WEAPONS%'
-UPDATE LookupCrime SET CrimeType = 'FirearmDischarge', CrimeCategory = 'Violent' WHERE RawCrimeType LIKE 'SHOOT%' OR RawCrimeType LIKE 'WILLFUL DISCHARGE FIREARM%'
+UPDATE LookupCrime SET CrimeType = 'FirearmDischarge', CrimeCategory = 'Personal' WHERE RawCrimeType LIKE 'SHOOT%' OR RawCrimeType LIKE 'WILLFUL DISCHARGE FIREARM%'
 
 SELECT * FROM LookupCrime 
 WHERE CrimeType IS NULL OR CrimeType = 'Unknown'
@@ -161,9 +168,38 @@ FROM OaklandCrimeData O
 	INNER JOIN LookupCrime L ON O.RawCrimeType = L.RawCrimeType
 WHERE O.CrimeType IS NULL
 
+-- Replace special characters in Description
+--SELECT DISTINCT(Description) FROM OaklandCrimeData WHERE [Description] LIKE '%[^a-Z0-9 &]%'
+
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],',','')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],'[','')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],']','')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],'(','')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],')','')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],'/',' ')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],'.','')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],':',' ')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],'-',' ')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],'+',' ')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],'$',' ')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],'&','AND')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],'%',' PERCENT ')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],'  ',' ')
+UPDATE OaklandCrimeData SET [Description] = REPLACE([Description],'   ',' ')
+
+-- Cleanup address special characters
+UPDATE OaklandCrimeData SET [Address] = REPLACE([Address],',','')
+UPDATE OaklandCrimeData SET [Address] = REPLACE([Address],'.','')
+
+-- Cleanup raw crime type special characters
+UPDATE OaklandCrimeData SET [RawCrimeType] = REPLACE([RawCrimeType],',','')
+UPDATE OaklandCrimeData SET [RawCrimeType] = REPLACE([RawCrimeType],'.','')
+
+
 SELECT * FROM OaklandCrimeData 
 WHERE CrimeType IS NULL 
 
 SELECT CrimeType, Count(1) AS CrimeCount FROM OaklandCrimeData 
 GROUP BY CrimeType
 ORDER BY CrimeCount DESC
+
